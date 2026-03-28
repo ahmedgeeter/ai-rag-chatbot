@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Scrollbar ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* ── Streaming cursor ───────────────────────────────── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.streaming-cursor::after {
+  content: "▋";
+  display: inline-block;
+  animation: blink 0.9s step-end infinite;
+  color: #818cf8;
+  margin-left: 1px;
+  font-size: 0.9em;
+}
+
+/* ── Glow utilities ─────────────────────────────────── */
+.glow-indigo {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.45),
+              0 0 40px rgba(99, 102, 241, 0.2),
+              inset 0 0 20px rgba(99, 102, 241, 0.05);
+}
+.glow-indigo-sm {
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.35);
+}
+
+/* ── Source panel transition ────────────────────────── */
+.source-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+.source-panel.open {
+  grid-template-rows: 1fr;
+}
+.source-panel > div {
+  overflow: hidden;
+}
