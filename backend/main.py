@@ -99,11 +99,24 @@ class ChatTurn(BaseModel):
     route: Optional[Literal["pdf", "general"]] = None
 
 
+class InspectorResponse(BaseModel):
+    indexed_pdf: bool
+    retrieval_query: str
+    history_turns: int
+    candidate_chunks: int
+    used_chunks: int
+    decision_basis: list[str] = Field(default_factory=list)
+    router_decision: Optional[str] = None
+    source_documents: list[str] = Field(default_factory=list)
+    source_pages: list[int] = Field(default_factory=list)
+
+
 class ChatResponse(BaseModel):
     answer: str
     sources: list[dict[str, str | int]] = Field(default_factory=list)
     route: Literal["pdf", "general"]
     response_time: float
+    inspector: InspectorResponse
 
 
 class UploadResponse(BaseModel):
@@ -441,15 +454,65 @@ def build_sources(documents) -> list[dict[str, str | int]]:
     ]
 
 
-def route_question(question: str, history: list[ChatTurn], candidate_documents) -> Literal["pdf", "general"]:
-    if vector_store is None:
-        return "general"
+def build_inspector(
+    *,
+    history: list[ChatTurn],
+    retrieval_query: str,
+    candidate_documents,
+    documents,
+    decision_basis: list[str],
+    router_decision: Optional[str],
+) -> InspectorResponse:
+    source_documents = sorted(
+        {
+            os.path.basename(document.metadata.get("source", ""))
+            for document in documents
+            if os.path.basename(document.metadata.get("source", ""))
+        }
+    )
+    source_pages = sorted(
+        {
+            document.metadata.get("page", 0) + 1
+            for document in documents
+            if document.metadata.get("page") is not None
+        }
+    )
 
-    if explicitly_mentions_document(question) or is_follow_up_reference_question(question, history):
-        return "pdf"
+    return InspectorResponse(
+        indexed_pdf=vector_store is not None,
+        retrieval_query=retrieval_query,
+        history_turns=len([turn for turn in history if turn.content.strip()]),
+        candidate_chunks=len(candidate_documents),
+        used_chunks=len(documents),
+        decision_basis=decision_basis,
+        router_decision=router_decision,
+        source_documents=source_documents,
+        source_pages=source_pages,
+    )
+
+
+def route_question(
+    question: str, history: list[ChatTurn], candidate_documents
+) -> tuple[Literal["pdf", "general"], Optional[str], list[str]]:
+    if vector_store is None:
+        return "general", None, [
+            "No indexed PDF was available, so the assistant answered from general knowledge."
+        ]
+
+    if explicitly_mentions_document(question):
+        return "pdf", None, [
+            "The user explicitly referenced the uploaded PDF, document structure, pages, or citations."
+        ]
+
+    if is_follow_up_reference_question(question, history):
+        return "pdf", None, [
+            "The question looks like a follow-up to a previous PDF-grounded answer."
+        ]
 
     if has_retrieval_overlap(question, candidate_documents):
-        return "pdf"
+        return "pdf", None, [
+            "Retrieved chunks overlapped strongly with the user's question, so PDF grounding was preferred."
+        ]
 
     router_response = build_llm(temperature=0).invoke(
         ROUTER_PROMPT.format_messages(
@@ -458,7 +521,13 @@ def route_question(question: str, history: list[ChatTurn], candidate_documents) 
         )
     )
     decision = router_response.content.strip().lower()
-    return "pdf" if decision.startswith("pdf") else "general"
+    route = "pdf" if decision.startswith("pdf") else "general"
+    decision_basis = [
+        "The LLM router selected PDF context based on the question and conversation history."
+        if route == "pdf"
+        else "The LLM router selected general knowledge because the question did not look document-specific."
+    ]
+    return route, decision, decision_basis
 
 
 def retrieve_documents(question: str):
@@ -471,7 +540,9 @@ def prepare_chat(question: str, history: list[ChatTurn]):
     history_text = format_history(history)
     retrieval_query = build_retrieval_query(question, history)
     candidate_documents = retrieve_documents(retrieval_query)
-    route = route_question(question, history, candidate_documents)
+    route, router_decision, decision_basis = route_question(
+        question, history, candidate_documents
+    )
     documents = candidate_documents if route == "pdf" else []
 
     if route == "pdf":
@@ -486,7 +557,16 @@ def prepare_chat(question: str, history: list[ChatTurn]):
             question=question,
         )
 
-    return route, documents, messages
+    inspector = build_inspector(
+        history=history,
+        retrieval_query=retrieval_query,
+        candidate_documents=candidate_documents,
+        documents=documents,
+        decision_basis=decision_basis,
+        router_decision=router_decision,
+    )
+
+    return route, documents, messages, inspector
 
 # ---------------------------------------------------------------------------
 # Endpoints
@@ -596,7 +676,9 @@ async def upload_pdf(file: UploadFile = File(...)):
 async def chat(request: ChatRequest):
     started_at = time.perf_counter()
     try:
-        route, documents, messages = prepare_chat(request.message, request.history)
+        route, documents, messages, inspector = prepare_chat(
+            request.message, request.history
+        )
         response = build_llm().invoke(messages)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -606,6 +688,7 @@ async def chat(request: ChatRequest):
         sources=build_sources(documents),
         route=route,
         response_time=round(time.perf_counter() - started_at, 2),
+        inspector=inspector,
     )
 
 
@@ -614,7 +697,9 @@ async def chat_stream(request: ChatRequest):
     started_at = time.perf_counter()
 
     try:
-        route, documents, messages = prepare_chat(request.message, request.history)
+        route, documents, messages, inspector = prepare_chat(
+            request.message, request.history
+        )
         sources = build_sources(documents)
         llm = build_llm(streaming=True)
     except Exception as exc:
@@ -626,7 +711,7 @@ async def chat_stream(request: ChatRequest):
                 if chunk.content:
                     yield f"data: {json.dumps({'type': 'token', 'content': chunk.content})}\n\n"
             yield f"data: {json.dumps({'type': 'sources', 'content': sources})}\n\n"
-            yield f"data: {json.dumps({'type': 'metadata', 'content': {'response_time': round(time.perf_counter() - started_at, 2), 'route': route}})}\n\n"
+            yield f"data: {json.dumps({'type': 'metadata', 'content': {'response_time': round(time.perf_counter() - started_at, 2), 'route': route, 'inspector': inspector.model_dump()}})}\n\n"
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
         except Exception as exc:
             yield f"data: {json.dumps({'type': 'error', 'content': str(exc)})}\n\n"

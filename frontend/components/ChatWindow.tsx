@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, KeyboardEvent } from "react";
 import { ArrowUp, Bot, FileSearch, Loader2 } from "lucide-react";
 import clsx from "clsx";
 import MessageBubble from "./MessageBubble";
-import type { ChatHistoryTurn, Message, Source } from "@/lib/types";
+import type { ChatHistoryTurn, Inspector, Message, Source } from "@/lib/types";
 
 interface Props {
   isIndexed: boolean;
@@ -12,10 +12,45 @@ interface Props {
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+interface RawInspector {
+  indexed_pdf: boolean;
+  retrieval_query: string;
+  history_turns: number;
+  candidate_chunks: number;
+  used_chunks: number;
+  decision_basis: string[];
+  router_decision?: string;
+  source_documents: string[];
+  source_pages: number[];
+}
+
+const mapInspector = (inspector?: RawInspector): Inspector | undefined => {
+  if (!inspector) return undefined;
+
+  return {
+    indexedPdf: inspector.indexed_pdf,
+    retrievalQuery: inspector.retrieval_query,
+    historyTurns: inspector.history_turns,
+    candidateChunks: inspector.candidate_chunks,
+    usedChunks: inspector.used_chunks,
+    decisionBasis: inspector.decision_basis,
+    routerDecision: inspector.router_decision,
+    sourceDocuments: inspector.source_documents,
+    sourcePages: inspector.source_pages,
+  };
+};
+
 type StreamEvent =
   | { type: "token"; content?: string }
   | { type: "sources"; content?: Source[] }
-  | { type: "metadata"; content?: { response_time?: number; route?: "pdf" | "general" } }
+  | {
+      type: "metadata";
+      content?: {
+        response_time?: number;
+        route?: "pdf" | "general";
+        inspector?: RawInspector;
+      };
+    }
   | { type: "done"; content?: undefined }
   | { type: "error"; content?: string };
 
@@ -139,6 +174,7 @@ export default function ChatWindow({ isIndexed }: Props) {
                 ...message,
                 responseTime: event.content?.response_time,
                 route: event.content?.route,
+                inspector: mapInspector(event.content?.inspector),
               }));
             } else if (event.type === "done") {
               updateAssistantMessage(asstId, (message) => ({
@@ -184,6 +220,9 @@ export default function ChatWindow({ isIndexed }: Props) {
         <div className="flex items-center gap-2">
           <Bot className="w-4 h-4 text-indigo-400" />
           <span className="text-sm font-medium text-slate-300">Assistant</span>
+          <span className="rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-indigo-300/90">
+            Inspector
+          </span>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-600">
           <span
@@ -211,8 +250,8 @@ export default function ChatWindow({ isIndexed }: Props) {
                 </h2>
                 <p className="text-sm text-slate-600 mt-1 max-w-xs mx-auto">
                   {isIndexed
-                    ? "I’ll route PDF questions to retrieval and everything else to general knowledge."
-                    : "You can ask general questions now, or drop a PDF in the sidebar for RAG."}
+                    ? "I’ll route PDF questions to retrieval, cite sources, and show you why the route was chosen."
+                    : "You can ask general questions now, or drop a PDF in the sidebar to inspect grounded retrieval."}
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-2">

@@ -10,6 +10,18 @@ export interface ChatHistoryTurn {
   route?: "pdf" | "general";
 }
 
+export interface Inspector {
+  indexedPdf: boolean;
+  retrievalQuery: string;
+  historyTurns: number;
+  candidateChunks: number;
+  usedChunks: number;
+  decisionBasis: string[];
+  routerDecision?: string;
+  sourceDocuments: string[];
+  sourcePages: number[];
+}
+
 export interface Message {
   id: number;
   role: "user" | "assistant";
@@ -18,4 +30,5 @@ export interface Message {
   isStreaming?: boolean;
   responseTime?: number;
   route?: "pdf" | "general";
+  inspector?: Inspector;
 }
