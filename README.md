@@ -1,3 +1,14 @@
+---
+title: AI RAG Chatbot Backend
+emoji: 🤖
+colorFrom: indigo
+colorTo: violet
+sdk: docker
+app_port: 7860
+pinned: false
+license: mit
+---
+
 # RAG Chat with Groq + FAISS
 
 A production-ready multilingual RAG application built with **FastAPI**, **Next.js 15**, **Groq Llama-3**, and **FAISS**.
