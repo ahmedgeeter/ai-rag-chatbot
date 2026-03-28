@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   FileText,
   FileSearch,
+  Github,
+  Linkedin,
   Loader2,
   RefreshCw,
   UploadCloud,
@@ -300,6 +302,30 @@ export default function Sidebar({ onIndexed, onReset }: Props) {
       </div>
 
       <div className="border-t border-slate-800/60 px-5 py-4">
+        <div className="mb-3 rounded-2xl border border-slate-800/70 bg-slate-950/50 p-3">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Built by Ahmed</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <a
+              href="https://github.com/ahmedgeeter"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-800/70 bg-slate-950/70 px-3 py-2 text-xs text-slate-300 transition-colors hover:border-slate-700 hover:text-white"
+            >
+              <Github className="h-3.5 w-3.5" />
+              <span>GitHub</span>
+            </a>
+            <a
+              href="https://www.linkedin.com/in/ahmed-ai-dev/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-800/70 bg-slate-950/70 px-3 py-2 text-xs text-slate-300 transition-colors hover:border-slate-700 hover:text-white"
+            >
+              <Linkedin className="h-3.5 w-3.5" />
+              <span>LinkedIn</span>
+            </a>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between text-[10px] text-slate-500">
           <span>LangChain · Groq · FAISS</span>
           <span>Arabic + English</span>
