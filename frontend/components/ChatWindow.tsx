@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, KeyboardEvent } from "react";
-import { ArrowUp, Bot, FileSearch, Loader2 } from "lucide-react";
+import { ArrowUp, Bot, FileSearch, Github, Linkedin, Loader2 } from "lucide-react";
 import clsx from "clsx";
 import MessageBubble from "./MessageBubble";
 import type { ChatHistoryTurn, Inspector, Message, Source } from "@/lib/types";
@@ -233,6 +233,27 @@ export default function ChatWindow({ isIndexed }: Props) {
               <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-400">
                 Ask in Arabic or English. The system routes each question, retrieves evidence when needed, and exposes the grounding details behind every answer.
               </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-[11px] text-slate-500">Built by Ahmed Geeter</span>
+                <a
+                  href="https://github.com/ahmedgeeter"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-800/70 bg-slate-950/70 px-3 py-1.5 text-[11px] text-slate-300 transition-colors hover:border-slate-700 hover:text-white"
+                >
+                  <Github className="h-3.5 w-3.5" />
+                  <span>GitHub</span>
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/ahmed-ai-dev/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-800/70 bg-slate-950/70 px-3 py-1.5 text-[11px] text-slate-300 transition-colors hover:border-slate-700 hover:text-white"
+                >
+                  <Linkedin className="h-3.5 w-3.5" />
+                  <span>LinkedIn</span>
+                </a>
+              </div>
             </div>
           </div>
 
