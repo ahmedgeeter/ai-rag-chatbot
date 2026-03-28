@@ -13,13 +13,15 @@ interface Props {
 
 const ARABIC_TEXT_PATTERN = /[\u0600-\u06FF]/;
 
+const containsArabicText = (text: string) => ARABIC_TEXT_PATTERN.test(text);
+
 export default function MessageBubble({ message }: Props) {
   const [showSources, setShowSources] = useState(false);
   const [showInspector, setShowInspector] = useState(false);
   const isUser = message.role === "user";
   const hasSources = (message.sources?.length ?? 0) > 0;
   const hasInspector = Boolean(message.inspector);
-  const containsArabic = ARABIC_TEXT_PATTERN.test(message.content);
+  const containsArabic = containsArabicText(message.content);
   const direction = containsArabic ? "rtl" : "ltr";
   const directionClass = containsArabic ? "message-direction-rtl" : "message-direction-ltr";
 
@@ -73,24 +75,40 @@ export default function MessageBubble({ message }: Props) {
                     remarkPlugins={[remarkGfm]}
                     components={{
                       p: ({ children }) => (
-                        <p className="mb-2 last:mb-0 text-slate-200">{children}</p>
+                        <p className={clsx("mb-2 last:mb-0 text-slate-200", directionClass)} dir={direction}>
+                          {children}
+                        </p>
                       ),
                       h1: ({ children }) => (
-                        <h1 className="text-lg font-bold mb-2 mt-3 text-slate-100">{children}</h1>
+                        <h1 className={clsx("text-lg font-bold mb-2 mt-3 text-slate-100", directionClass)} dir={direction}>
+                          {children}
+                        </h1>
                       ),
                       h2: ({ children }) => (
-                        <h2 className="text-base font-bold mb-2 mt-3 text-slate-100">{children}</h2>
+                        <h2 className={clsx("text-base font-bold mb-2 mt-3 text-slate-100", directionClass)} dir={direction}>
+                          {children}
+                        </h2>
                       ),
                       h3: ({ children }) => (
-                        <h3 className="text-sm font-bold mb-1 mt-2 text-slate-100">{children}</h3>
+                        <h3 className={clsx("text-sm font-bold mb-1 mt-2 text-slate-100", directionClass)} dir={direction}>
+                          {children}
+                        </h3>
                       ),
                       ul: ({ children }) => (
-                        <ul className="mb-2 list-disc space-y-0.5 ps-5 text-slate-300">{children}</ul>
+                        <ul className={clsx("mb-2 list-disc space-y-0.5 ps-5 text-slate-300", directionClass)} dir={direction}>
+                          {children}
+                        </ul>
                       ),
                       ol: ({ children }) => (
-                        <ol className="mb-2 list-decimal space-y-0.5 ps-5 text-slate-300">{children}</ol>
+                        <ol className={clsx("mb-2 list-decimal space-y-0.5 ps-5 text-slate-300", directionClass)} dir={direction}>
+                          {children}
+                        </ol>
                       ),
-                      li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                      li: ({ children }) => (
+                        <li className={clsx("leading-relaxed", directionClass)} dir={direction}>
+                          {children}
+                        </li>
+                      ),
                       code: ({ className, children, ...props }) => {
                         const isBlock = Boolean(className);
                         return isBlock ? (
@@ -115,7 +133,13 @@ export default function MessageBubble({ message }: Props) {
                         </pre>
                       ),
                       blockquote: ({ children }) => (
-                        <blockquote className="my-2 border-s-4 border-indigo-500/60 ps-3 text-slate-400 italic">
+                        <blockquote
+                          className={clsx(
+                            "my-2 border-s-4 border-indigo-500/60 ps-3 text-slate-400 italic",
+                            directionClass
+                          )}
+                          dir={direction}
+                        >
                           {children}
                         </blockquote>
                       ),
@@ -130,17 +154,23 @@ export default function MessageBubble({ message }: Props) {
                         </a>
                       ),
                       table: ({ children }) => (
-                        <div className="overflow-x-auto my-2 rounded-lg border border-slate-700/50">
+                        <div className="overflow-x-auto my-2 rounded-lg border border-slate-700/50" dir={direction}>
                           <table className="min-w-full text-xs">{children}</table>
                         </div>
                       ),
                       th: ({ children }) => (
-                        <th className="border-b border-slate-700 px-3 py-2 bg-slate-800 text-left font-semibold text-slate-300">
+                        <th
+                          className={clsx(
+                            "border-b border-slate-700 px-3 py-2 bg-slate-800 font-semibold text-slate-300",
+                            containsArabic ? "text-right" : "text-left"
+                          )}
+                          dir={direction}
+                        >
                           {children}
                         </th>
                       ),
                       td: ({ children }) => (
-                        <td className="border-b border-slate-700/40 px-3 py-2 text-slate-400">
+                        <td className={clsx("border-b border-slate-700/40 px-3 py-2 text-slate-400", directionClass)} dir={direction}>
                           {children}
                         </td>
                       ),
@@ -168,7 +198,12 @@ export default function MessageBubble({ message }: Props) {
         </div>
 
         {!isUser && !message.isStreaming && (message.responseTime !== undefined || message.route) && (
-          <div className="flex items-center gap-2 px-1 text-[11px] text-slate-500">
+          <div
+            className={clsx(
+              "flex items-center gap-2 px-1 text-[11px] text-slate-500",
+              containsArabic && "justify-end"
+            )}
+          >
             {message.responseTime !== undefined && (
               <span>Generated in {message.responseTime.toFixed(1)}s</span>
             )}
