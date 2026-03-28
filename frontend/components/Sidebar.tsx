@@ -4,8 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   AlertCircle,
+  Bot,
   CheckCircle2,
   FileText,
+  FileSearch,
   Loader2,
   RefreshCw,
   UploadCloud,
@@ -112,162 +114,196 @@ export default function Sidebar({ onIndexed, onReset }: Props) {
   });
 
   return (
-    <aside className="w-72 shrink-0 flex flex-col h-screen bg-slate-900 border-r border-slate-800/60">
-      {/* ── Logo ─────────────────────────────────────── */}
-      <div className="px-5 py-5 border-b border-slate-800/60">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-            <Zap className="w-4 h-4 text-white" />
+    <aside className="relative z-10 flex w-full shrink-0 flex-col overflow-hidden rounded-[28px] surface-panel lg:h-full lg:w-[340px]">
+      <div className="border-b border-slate-800/60 px-5 py-5">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/20">
+            <Zap className="h-5 w-5 text-white" />
           </div>
-          <div>
-            <p className="text-sm font-semibold text-slate-100 leading-tight">
-              RAG Chat
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-slate-100 leading-tight">
+                RAG Intelligence Workspace
+              </p>
+              <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-300">
+                Live demo
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
+              Multilingual retrieval, grounded answers, and transparent routing for document-aware AI chat.
             </p>
-            <p className="text-[10px] text-slate-500 leading-tight">
-              multilingual RAG · Groq
-            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-2">
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-800/70 bg-slate-950/60 px-3 py-2">
+            <Bot className="h-4 w-4 text-indigo-300" />
+            <div>
+              <p className="text-[11px] font-medium text-slate-200">Agentic routing</p>
+              <p className="text-[10px] text-slate-500">PDF-grounded or general knowledge per question</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-800/70 bg-slate-950/60 px-3 py-2">
+            <FileSearch className="h-4 w-4 text-violet-300" />
+            <div>
+              <p className="text-[11px] font-medium text-slate-200">Inspectable retrieval</p>
+              <p className="text-[10px] text-slate-500">View chunks, pages, and routing rationale</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Upload section ───────────────────────────── */}
-      <div className="flex-1 flex flex-col gap-4 p-4 overflow-y-auto">
-        <p className="text-[11px] font-medium text-slate-500 uppercase tracking-widest px-1">
-          Document
-        </p>
+      <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        <div className="rounded-[24px] border border-slate-800/70 bg-slate-950/40 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-slate-500">
+                Document workspace
+              </p>
+              <p className="mt-1 text-xs text-slate-400">
+                Upload one PDF to build the retrieval index and activate grounded answers.
+              </p>
+            </div>
+          </div>
 
-        {/* Drop Zone */}
-        {(status === "idle" || status === "error") && (
-          <div
-            {...getRootProps()}
-            className={clsx(
-              "relative rounded-xl border-2 border-dashed p-6 flex flex-col items-center gap-3 cursor-pointer",
-              "transition-all duration-300 ease-out outline-none",
-              isDragActive
-                ? "border-indigo-500 bg-indigo-500/5 glow-indigo"
-                : "border-slate-700 hover:border-slate-600 hover:bg-slate-800/40"
-            )}
-          >
-            <input {...getInputProps()} />
-
-            {/* animated ring on drag */}
-            {isDragActive && (
-              <div className="absolute inset-0 rounded-xl border-2 border-indigo-400 animate-ping opacity-30 pointer-events-none" />
-            )}
-
+          {(status === "idle" || status === "error") && (
             <div
+              {...getRootProps()}
               className={clsx(
-                "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300",
+                "relative flex cursor-pointer flex-col items-center gap-3 rounded-[22px] border-2 border-dashed p-6",
+                "transition-all duration-300 ease-out outline-none",
                 isDragActive
-                  ? "bg-indigo-500/20 text-indigo-400"
-                  : "bg-slate-800 text-slate-500"
+                  ? "border-indigo-500 bg-indigo-500/5 glow-indigo"
+                  : "border-slate-700/80 bg-slate-950/40 hover:border-slate-500 hover:bg-slate-900/70"
               )}
             >
-              <UploadCloud className="w-6 h-6" />
-            </div>
+              <input {...getInputProps()} />
 
-            <div className="text-center">
-              <p className="text-sm font-medium text-slate-300">
-                {isDragActive ? "Release to upload" : "Drop PDF here"}
-              </p>
-              <p className="text-xs text-slate-600 mt-0.5">
-                or click to browse
-              </p>
-            </div>
-
-            {status === "error" && (
-              <div className="w-full mt-1 flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-lg p-2.5">
-                <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                <p className="text-xs text-red-400 leading-snug">{errorMsg}</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Uploading / Indexing state */}
-        {status === "uploading" && (
-          <div className="rounded-xl border border-slate-700/60 bg-slate-800/40 p-5 flex flex-col items-center gap-3">
-            <div className="relative">
-              <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-indigo-400" />
-              </div>
-              <Loader2 className="absolute -bottom-0.5 -right-0.5 w-5 h-5 text-indigo-400 animate-spin" />
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-medium text-slate-200">Indexing…</p>
-              <p
-                className="text-xs text-slate-500 mt-0.5 max-w-[160px] truncate"
-                title={filename ?? ""}
-              >
-                {filename}
-              </p>
-              <p className="text-[11px] text-slate-600 mt-2 max-w-[200px] leading-relaxed">
-                {uploadHint}
-              </p>
-              {elapsedSeconds > 0 && (
-                <p className="text-[10px] text-slate-500 mt-1">{elapsedSeconds}s elapsed</p>
+              {isDragActive && (
+                <div className="pointer-events-none absolute inset-0 rounded-[22px] border-2 border-indigo-400 opacity-30 animate-ping" />
               )}
-            </div>
-            {/* progress bar shimmer */}
-            <div className="w-full h-1 rounded-full bg-slate-700 overflow-hidden">
-              <div className="h-full w-1/2 bg-indigo-500 rounded-full animate-[shimmer_1.5s_ease-in-out_infinite]" />
-            </div>
-          </div>
-        )}
 
-        {/* Ready state */}
-        {status === "ready" && (
-          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 flex flex-col gap-3">
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+              <div
+                className={clsx(
+                  "flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300",
+                  isDragActive
+                    ? "bg-indigo-500/20 text-indigo-400"
+                    : "bg-slate-800 text-slate-500"
+                )}
+              >
+                <UploadCloud className="w-6 h-6" />
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-200">Ready to chat</p>
-                <p
-                  className="text-xs text-slate-500 truncate mt-0.5"
-                  title={filename ?? ""}
-                >
-                  {filename}
+
+              <div className="text-center">
+                <p className="text-sm font-medium text-slate-200">
+                  {isDragActive ? "Release to upload" : "Drop a PDF here"}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  Drag and drop or click to browse. Best for specs, RFCs, research notes, and manuals.
                 </p>
               </div>
-            </div>
 
-            <div className="flex items-center justify-between px-1">
-              <div className="text-center">
-                <p className="text-lg font-bold text-indigo-400">{chunks}</p>
-                <p className="text-[10px] text-slate-500">chunks</p>
+              {status === "error" && (
+                <div className="mt-1 flex w-full items-start gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 p-2.5">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+                  <p className="text-xs leading-snug text-red-400">{errorMsg}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {status === "uploading" && (
+            <div className="flex flex-col items-center gap-3 rounded-[22px] border border-slate-700/60 bg-slate-900/50 p-5">
+              <div className="relative">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500/10">
+                  <FileText className="h-5 w-5 text-indigo-400" />
+                </div>
+                <Loader2 className="absolute -bottom-0.5 -right-0.5 h-5 w-5 animate-spin text-indigo-400" />
               </div>
-              <div className="h-8 w-px bg-slate-700/60" />
               <div className="text-center">
-                <p className="text-lg font-bold text-violet-400">5</p>
-                <p className="text-[10px] text-slate-500">top-k</p>
+                <p className="text-sm font-medium text-slate-200">Indexing…</p>
+                <p className="mt-0.5 max-w-[160px] truncate text-xs text-slate-500" title={filename ?? ""}>
+                  {filename}
+                </p>
+                <p className="mt-2 max-w-[220px] text-[11px] leading-relaxed text-slate-500">
+                  {uploadHint}
+                </p>
+                {elapsedSeconds > 0 && (
+                  <p className="mt-1 text-[10px] text-slate-400">{elapsedSeconds}s elapsed</p>
+                )}
               </div>
-              <div className="h-8 w-px bg-slate-700/60" />
-              <div className="text-center">
-                <p className="text-lg font-bold text-pink-400">800</p>
-                <p className="text-[10px] text-slate-500">chars</p>
+              <div className="h-1 w-full overflow-hidden rounded-full bg-slate-700">
+                <div className="h-full w-1/2 animate-[shimmer_1.5s_ease-in-out_infinite] rounded-full bg-indigo-500" />
               </div>
             </div>
+          )}
 
-            <button
-              onClick={reset}
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 transition-colors"
-            >
-              <RefreshCw className="w-3 h-3" />
-              Upload another PDF
-            </button>
+          {status === "ready" && (
+            <div className="flex flex-col gap-4 rounded-[22px] border border-emerald-500/20 bg-emerald-500/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-100">Ready to inspect</p>
+                  <p className="mt-0.5 truncate text-xs text-slate-400" title={filename ?? ""}>
+                    {filename}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-2xl border border-slate-800/70 bg-slate-950/60 px-3 py-3 text-center">
+                  <p className="text-lg font-bold text-indigo-400">{chunks}</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">chunks</p>
+                </div>
+                <div className="rounded-2xl border border-slate-800/70 bg-slate-950/60 px-3 py-3 text-center">
+                  <p className="text-lg font-bold text-violet-400">5</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">top-k</p>
+                </div>
+                <div className="rounded-2xl border border-slate-800/70 bg-slate-950/60 px-3 py-3 text-center">
+                  <p className="text-lg font-bold text-pink-400">800</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">chars</p>
+                </div>
+              </div>
+
+              <button
+                onClick={reset}
+                className="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-slate-800/70 bg-slate-950/60 py-2 text-xs text-slate-300 transition-colors hover:border-slate-700 hover:text-slate-100"
+              >
+                <RefreshCw className="h-3 w-3" />
+                Upload another PDF
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-[22px] border border-slate-800/70 bg-slate-950/50 p-4">
+          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-slate-500">
+            What this demo shows
+          </p>
+          <div className="mt-3 space-y-3 text-xs text-slate-400">
+            <div className="flex items-start gap-2">
+              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-indigo-400" />
+              <p>Grounded answers with page-aware citations and source snippets.</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-violet-400" />
+              <p>Agentic routing between uploaded-document context and general knowledge.</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <p>Transparent inspector metadata for explainability and debugging.</p>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* ── Footer ───────────────────────────────────── */}
-      <div className="px-5 py-4 border-t border-slate-800/60">
-        <p className="text-[10px] text-slate-600 text-center leading-relaxed">
-          Powered by{" "}
-          <span className="text-slate-500">LangChain</span> &{" "}
-          <span className="text-slate-500">Groq</span>
-        </p>
+      <div className="border-t border-slate-800/60 px-5 py-4">
+        <div className="flex items-center justify-between text-[10px] text-slate-500">
+          <span>LangChain · Groq · FAISS</span>
+          <span>Arabic + English</span>
+        </div>
       </div>
     </aside>
   );

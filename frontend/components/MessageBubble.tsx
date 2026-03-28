@@ -11,12 +11,17 @@ interface Props {
   message: Message;
 }
 
+const ARABIC_TEXT_PATTERN = /[\u0600-\u06FF]/;
+
 export default function MessageBubble({ message }: Props) {
   const [showSources, setShowSources] = useState(false);
   const [showInspector, setShowInspector] = useState(false);
   const isUser = message.role === "user";
   const hasSources = (message.sources?.length ?? 0) > 0;
   const hasInspector = Boolean(message.inspector);
+  const containsArabic = ARABIC_TEXT_PATTERN.test(message.content);
+  const direction = containsArabic ? "rtl" : "ltr";
+  const directionClass = containsArabic ? "message-direction-rtl" : "message-direction-ltr";
 
   return (
     <div
@@ -25,10 +30,9 @@ export default function MessageBubble({ message }: Props) {
         isUser ? "flex-row-reverse" : "flex-row"
       )}
     >
-      {/* Avatar */}
       <div
         className={clsx(
-          "w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold mt-0.5",
+          "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
           isUser
             ? "bg-indigo-600 text-white"
             : "bg-gradient-to-br from-violet-600 to-indigo-600 text-white"
@@ -46,20 +50,22 @@ export default function MessageBubble({ message }: Props) {
       >
         <div
           className={clsx(
-            "rounded-2xl px-4 py-3 text-sm leading-relaxed",
+            "rounded-[24px] px-4 py-3 text-sm leading-relaxed shadow-[0_8px_24px_rgba(2,6,23,0.18)]",
             isUser
-              ? "bg-indigo-600 text-white rounded-tr-sm"
-              : "bg-slate-800/80 border border-slate-700/50 text-slate-200 rounded-tl-sm"
+              ? "rounded-tr-sm bg-indigo-600 text-white"
+              : "rounded-tl-sm border border-slate-700/50 bg-slate-800/80 text-slate-200"
           )}
+          dir={direction}
         >
           {isUser ? (
-            <p className="whitespace-pre-wrap">{message.content}</p>
+            <p className={clsx("whitespace-pre-wrap", directionClass)}>{message.content}</p>
           ) : (
             <>
               {message.content ? (
                 <div
                   className={clsx(
                     "prose-sm prose-invert max-w-none",
+                    directionClass,
                     message.isStreaming && "streaming-cursor"
                   )}
                 >
@@ -79,10 +85,10 @@ export default function MessageBubble({ message }: Props) {
                         <h3 className="text-sm font-bold mb-1 mt-2 text-slate-100">{children}</h3>
                       ),
                       ul: ({ children }) => (
-                        <ul className="list-disc ml-5 mb-2 space-y-0.5 text-slate-300">{children}</ul>
+                        <ul className="mb-2 list-disc space-y-0.5 ps-5 text-slate-300">{children}</ul>
                       ),
                       ol: ({ children }) => (
-                        <ol className="list-decimal ml-5 mb-2 space-y-0.5 text-slate-300">{children}</ol>
+                        <ol className="mb-2 list-decimal space-y-0.5 ps-5 text-slate-300">{children}</ol>
                       ),
                       li: ({ children }) => <li className="leading-relaxed">{children}</li>,
                       code: ({ className, children, ...props }) => {
@@ -109,7 +115,7 @@ export default function MessageBubble({ message }: Props) {
                         </pre>
                       ),
                       blockquote: ({ children }) => (
-                        <blockquote className="border-l-4 border-indigo-500/60 pl-3 my-2 text-slate-400 italic">
+                        <blockquote className="my-2 border-s-4 border-indigo-500/60 ps-3 text-slate-400 italic">
                           {children}
                         </blockquote>
                       ),
@@ -151,7 +157,6 @@ export default function MessageBubble({ message }: Props) {
                   </ReactMarkdown>
                 </div>
               ) : (
-                /* Thinking dots while waiting for first token */
                 <div className="flex items-center gap-1 py-0.5">
                   <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0ms]" />
                   <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:150ms]" />
@@ -194,8 +199,8 @@ export default function MessageBubble({ message }: Props) {
             </button>
 
             <div className={clsx("source-panel", showInspector && "open")}>
-              <div className="mt-2 rounded-xl border border-violet-500/15 bg-slate-900/60 p-3 text-xs text-slate-300">
-                <div className="grid gap-2 sm:grid-cols-2">
+              <div className="mt-2 rounded-xl border border-violet-500/15 bg-slate-900/60 p-3 text-xs text-slate-300" dir="ltr">
+                <div className="inspector-grid">
                   <div className="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2">
                     <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Route</p>
                     <p className="mt-1 font-medium text-slate-200">
@@ -308,7 +313,6 @@ export default function MessageBubble({ message }: Props) {
               </span>
             </button>
 
-            {/* Source snippets panel */}
             <div className={clsx("source-panel", showSources && "open")}>
               <div>
                 <div className="mt-2 flex flex-col gap-2">
@@ -316,6 +320,7 @@ export default function MessageBubble({ message }: Props) {
                     <div
                       key={i}
                       className="rounded-xl border border-slate-700/40 bg-slate-900/60 p-3 text-xs"
+                      dir={ARABIC_TEXT_PATTERN.test(src.text) ? "rtl" : "ltr"}
                     >
                       <div className="flex items-center gap-1.5 mb-1.5 text-slate-500">
                         <FileText className="w-3 h-3 text-indigo-500" />
@@ -329,7 +334,14 @@ export default function MessageBubble({ message }: Props) {
                           </>
                         )}
                       </div>
-                      <p className="text-slate-400 leading-relaxed line-clamp-4">
+                      <p
+                        className={clsx(
+                          "line-clamp-4 leading-relaxed text-slate-400",
+                          ARABIC_TEXT_PATTERN.test(src.text)
+                            ? "message-direction-rtl"
+                            : "message-direction-ltr"
+                        )}
+                      >
                         {src.text}
                       </p>
                     </div>

@@ -1,12 +1,21 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Cairo, Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin", "latin-ext"] });
+const inter = Inter({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-sans",
+});
+
+const cairo = Cairo({
+  subsets: ["arabic", "latin"],
+  variable: "--font-arabic",
+  weight: ["400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
-  title: "RAG Chat — AI PDF Assistant",
-  description: "Chat with your documents using Groq-powered AI",
+  title: "RAG Intelligence Workspace",
+  description: "Explainable multilingual RAG workspace with document grounding, citations, and routing transparency.",
 };
 
 export default function RootLayout({
@@ -17,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.className} bg-slate-950 text-slate-100 antialiased h-screen overflow-hidden`}
+        className={`${inter.variable} ${cairo.variable} min-h-screen bg-slate-950 text-slate-100 antialiased overflow-hidden`}
       >
         {children}
       </body>

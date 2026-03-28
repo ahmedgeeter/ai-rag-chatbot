@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: dark;
+}
+
+html {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(168, 85, 247, 0.14), transparent 24%),
+    linear-gradient(180deg, #020617 0%, #020617 40%, #030712 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(129, 140, 248, 0.28);
+  color: #e2e8f0;
+}
+
 /* ── Scrollbar ──────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -43,4 +67,32 @@
 }
 .source-panel > div {
   overflow: hidden;
+}
+
+.surface-panel {
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  box-shadow:
+    0 12px 40px rgba(2, 6, 23, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(18px);
+}
+
+.message-direction-rtl {
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: plaintext;
+  font-family: var(--font-arabic), var(--font-sans), system-ui, sans-serif;
+}
+
+.message-direction-ltr {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: plaintext;
+}
+
+.inspector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
 }

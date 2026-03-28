@@ -11,6 +11,7 @@ interface Props {
 }
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const ARABIC_TEXT_PATTERN = /[\u0600-\u06FF]/;
 
 interface RawInspector {
   indexed_pdf: boolean;
@@ -60,6 +61,7 @@ export default function ChatWindow({ isIndexed }: Props) {
   const [isStreaming, setIsStreaming] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inputLooksArabic = ARABIC_TEXT_PATTERN.test(input);
 
   const updateAssistantMessage = (
     assistantId: number,
@@ -214,46 +216,79 @@ export default function ChatWindow({ isIndexed }: Props) {
   const canSend = !isStreaming && input.trim().length > 0;
 
   return (
-    <div className="flex flex-col h-full bg-slate-950">
-      {/* ── Header ───────────────────────────────────── */}
-      <header className="shrink-0 flex items-center justify-between px-6 py-3.5 border-b border-slate-800/60 bg-slate-950/80 backdrop-blur-sm">
-        <div className="flex items-center gap-2">
-          <Bot className="w-4 h-4 text-indigo-400" />
-          <span className="text-sm font-medium text-slate-300">Assistant</span>
-          <span className="rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-indigo-300/90">
-            Inspector
-          </span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-slate-600">
-          <span
-            className={clsx(
-              "w-1.5 h-1.5 rounded-full",
-              isIndexed ? "bg-emerald-500" : "bg-slate-700"
-            )}
-          />
-          {isIndexed ? "PDF + general mode" : "General mode only"}
+    <div className="flex h-full flex-col bg-transparent">
+      <header className="shrink-0 border-b border-slate-800/60 bg-slate-950/45 px-6 py-4 backdrop-blur-sm">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/25 to-violet-500/20 ring-1 ring-indigo-400/20">
+              <Bot className="h-5 w-5 text-indigo-300" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-base font-semibold text-slate-100">Explainable AI Assistant</h1>
+                <span className="rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-indigo-300/90">
+                  Inspector
+                </span>
+              </div>
+              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-400">
+                Ask in Arabic or English. The system routes each question, retrieves evidence when needed, and exposes the grounding details behind every answer.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <div className="rounded-2xl border border-slate-800/70 bg-slate-950/70 px-3 py-2 text-slate-400">
+              Multilingual retrieval
+            </div>
+            <div className="rounded-2xl border border-slate-800/70 bg-slate-950/70 px-3 py-2 text-slate-400">
+              Source citations
+            </div>
+            <div className="flex items-center gap-2 rounded-2xl border border-slate-800/70 bg-slate-950/70 px-3 py-2 text-slate-400">
+              <span
+                className={clsx(
+                  "h-1.5 w-1.5 rounded-full",
+                  isIndexed ? "bg-emerald-500" : "bg-slate-600"
+                )}
+              />
+              {isIndexed ? "PDF + general mode" : "General mode only"}
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* ── Messages ─────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-4 py-6">
+        <div className="mx-auto max-w-4xl px-4 py-6 md:px-6">
           {messages.length === 0 ? (
-            /* Empty state */
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center select-none">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 border border-indigo-500/20 flex items-center justify-center">
-                <FileSearch className="w-7 h-7 text-indigo-400" />
+            <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-[28px] border border-indigo-500/20 bg-gradient-to-br from-indigo-500/15 to-violet-500/10 shadow-[0_20px_60px_rgba(99,102,241,0.15)]">
+                <FileSearch className="h-8 w-8 text-indigo-300" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-slate-300">
-                  {isIndexed ? "Ready to answer" : "Ask anything, or upload a PDF"}
+                <h2 className="text-2xl font-semibold tracking-tight text-slate-100">
+                  {isIndexed ? "Analyze documents with transparent reasoning" : "A polished RAG workspace for technical documents"}
                 </h2>
-                <p className="text-sm text-slate-600 mt-1 max-w-xs mx-auto">
+                <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
                   {isIndexed
-                    ? "I’ll route PDF questions to retrieval, cite sources, and show you why the route was chosen."
-                    : "You can ask general questions now, or drop a PDF in the sidebar to inspect grounded retrieval."}
+                    ? "Use follow-up questions, ask for evidence, and inspect the retrieval path for each answer."
+                    : "Upload a PDF to activate grounded retrieval, citations, and routing explainability. You can still ask general questions right now."}
                 </p>
               </div>
+
+              <div className="grid w-full max-w-3xl gap-3 md:grid-cols-3">
+                <div className="rounded-[24px] border border-slate-800/70 bg-slate-950/50 p-4 text-left">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-indigo-300/80">Routing</p>
+                  <p className="mt-2 text-sm text-slate-300">Each question is routed between PDF-grounded retrieval and general knowledge.</p>
+                </div>
+                <div className="rounded-[24px] border border-slate-800/70 bg-slate-950/50 p-4 text-left">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-violet-300/80">Evidence</p>
+                  <p className="mt-2 text-sm text-slate-300">Responses expose source snippets, pages, and the retrieval query behind the answer.</p>
+                </div>
+                <div className="rounded-[24px] border border-slate-800/70 bg-slate-950/50 p-4 text-left">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-emerald-300/80">Arabic-ready</p>
+                  <p className="mt-2 text-sm text-slate-300">The interface supports readable Arabic and English interactions inside the same workspace.</p>
+                </div>
+              </div>
+
               <div className="flex flex-wrap justify-center gap-2">
                 {[
                   ...(isIndexed
@@ -272,7 +307,7 @@ export default function ChatWindow({ isIndexed }: Props) {
                       setInput(prompt);
                       textareaRef.current?.focus();
                     }}
-                    className="px-3 py-1.5 rounded-xl border border-slate-700/60 bg-slate-800/40 text-xs text-slate-400 hover:text-slate-200 hover:border-slate-600 hover:bg-slate-800/80 transition-all"
+                    className="rounded-2xl border border-slate-700/60 bg-slate-900/50 px-3 py-2 text-xs text-slate-400 transition-all hover:border-slate-600 hover:bg-slate-800/80 hover:text-slate-200"
                   >
                     {prompt}
                   </button>
@@ -290,13 +325,12 @@ export default function ChatWindow({ isIndexed }: Props) {
         </div>
       </div>
 
-      {/* ── Input ────────────────────────────────────── */}
-      <div className="shrink-0 px-4 pb-5 pt-3 bg-slate-950">
-        <div className="max-w-3xl mx-auto">
+      <div className="shrink-0 bg-slate-950/35 px-4 pb-5 pt-3 backdrop-blur-sm">
+        <div className="mx-auto max-w-4xl">
           <div
             className={clsx(
-              "flex items-end gap-3 rounded-2xl border px-4 py-3 transition-all duration-200",
-              "bg-slate-900/80 border-slate-700/60 focus-within:border-indigo-500/60 focus-within:glow-indigo-sm"
+              "flex items-end gap-3 rounded-[26px] border px-4 py-3 transition-all duration-200",
+              "bg-slate-900/80 border-slate-700/60 shadow-[0_12px_32px_rgba(2,6,23,0.25)] focus-within:border-indigo-500/60 focus-within:glow-indigo-sm"
             )}
           >
             <textarea
@@ -311,14 +345,18 @@ export default function ChatWindow({ isIndexed }: Props) {
                   : "Ask a general question, or upload a PDF for retrieval…"
               }
               rows={1}
-              className="flex-1 bg-transparent resize-none text-sm text-slate-200 placeholder:text-slate-600 outline-none leading-relaxed disabled:cursor-not-allowed"
+              dir={inputLooksArabic ? "rtl" : "ltr"}
+              className={clsx(
+                "flex-1 resize-none bg-transparent text-sm leading-relaxed text-slate-200 outline-none placeholder:text-slate-600 disabled:cursor-not-allowed",
+                inputLooksArabic ? "message-direction-rtl" : "message-direction-ltr"
+              )}
               style={{ maxHeight: "160px" }}
             />
             <button
               onClick={sendMessage}
               disabled={!canSend}
               className={clsx(
-                "shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200",
+                "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-all duration-200",
                 canSend
                   ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/25"
                   : "bg-slate-800 text-slate-600 cursor-not-allowed"
@@ -331,9 +369,10 @@ export default function ChatWindow({ isIndexed }: Props) {
               )}
             </button>
           </div>
-          <p className="text-center text-[10px] text-slate-700 mt-2">
-            Supports Arabic & English · Groq-powered chat
-          </p>
+          <div className="mt-2 flex flex-col gap-1 text-center text-[10px] text-slate-500 md:flex-row md:items-center md:justify-between">
+            <span>Supports Arabic & English · Explainable RAG</span>
+            <span>Built for document QA, follow-ups, and source-grounded analysis</span>
+          </div>
         </div>
       </div>
     </div>
