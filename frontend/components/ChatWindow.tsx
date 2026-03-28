@@ -154,7 +154,7 @@ export default function ChatWindow({ isIndexed }: Props) {
     } catch (err) {
       const msg =
         err instanceof TypeError
-          ? `Cannot reach backend at ${API}. Start the FastAPI server and try again.`
+          ? `Cannot reach backend at ${API}. Check the backend deployment and NEXT_PUBLIC_API_URL configuration.`
           : err instanceof Error
             ? err.message
             : "An unexpected error occurred.";

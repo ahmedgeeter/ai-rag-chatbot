@@ -38,18 +38,41 @@ from pydantic import BaseModel, Field
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_ALLOWED_ORIGINS = (
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+)
 
 load_dotenv(BASE_DIR / ".env")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("rag_api")
 
+
+def parse_csv_env(name: str) -> list[str]:
+    return [value.strip() for value in os.getenv(name, "").split(",") if value.strip()]
+
+
+def get_allowed_origins() -> list[str]:
+    return parse_csv_env("ALLOWED_ORIGINS") or list(DEFAULT_ALLOWED_ORIGINS)
+
+
+def get_allowed_origin_regex() -> Optional[str]:
+    value = os.getenv("ALLOWED_ORIGIN_REGEX", "").strip()
+    return value or None
+
+
+def is_groq_configured() -> bool:
+    return bool(os.getenv("GROQ_API_KEY"))
+
+
 app = FastAPI(title="RAG API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=get_allowed_origins(),
+    allow_origin_regex=get_allowed_origin_regex(),
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -367,7 +390,7 @@ def require_groq_api_key() -> str:
     if not groq_api_key:
         raise HTTPException(
             status_code=500,
-            detail="GROQ_API_KEY is not set. Add it to the .env file.",
+            detail="GROQ_API_KEY is not set. Add it to the environment or .env file.",
         )
     return groq_api_key
 
@@ -470,6 +493,44 @@ def prepare_chat(question: str, history: list[ChatTurn]):
 # ---------------------------------------------------------------------------
 
 
+@app.get("/")
+async def root():
+    return {
+        "name": "RAG API",
+        "status": "ok",
+        "docs": "/docs",
+        "health": "/health",
+        "indexed_pdf": vector_store is not None,
+        "groq_configured": is_groq_configured(),
+        "embedding_model": get_embedding_model_name(),
+        "groq_model": get_groq_model_name(),
+    }
+
+
+@app.get("/health")
+async def health():
+    return {
+        "status": "ok",
+        "indexed_pdf": vector_store is not None,
+        "groq_configured": is_groq_configured(),
+        "embedding_model": get_embedding_model_name(),
+        "groq_model": get_groq_model_name(),
+    }
+
+
+@app.get("/health/ready")
+async def health_ready():
+    if not is_groq_configured():
+        raise HTTPException(status_code=503, detail="GROQ_API_KEY is not configured.")
+
+    return {
+        "status": "ready",
+        "indexed_pdf": vector_store is not None,
+        "embedding_model": get_embedding_model_name(),
+        "groq_model": get_groq_model_name(),
+    }
+
+
 @app.post("/upload", response_model=UploadResponse)
 async def upload_pdf(file: UploadFile = File(...)):
     """
@@ -478,11 +539,12 @@ async def upload_pdf(file: UploadFile = File(...)):
     """
     global vector_store
     started_at = time.perf_counter()
+    filename = file.filename or "uploaded.pdf"
 
-    if not file.filename.lower().endswith(".pdf"):
+    if not filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
 
-    logger.info("Starting PDF upload processing for %s", file.filename)
+    logger.info("Starting PDF upload processing for %s", filename)
 
     # Persist the upload to a temp file so PyPDFLoader can read it from disk
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
@@ -492,7 +554,7 @@ async def upload_pdf(file: UploadFile = File(...)):
     try:
         loader = PyPDFLoader(tmp_path)
         documents = loader.load()
-        logger.info("Loaded %s pages from %s", len(documents), file.filename)
+        logger.info("Loaded %s pages from %s", len(documents), filename)
 
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=800,
@@ -500,7 +562,7 @@ async def upload_pdf(file: UploadFile = File(...)):
             length_function=len,
         )
         chunks = splitter.split_documents(documents)
-        logger.info("Split %s into %s chunks", file.filename, len(chunks))
+        logger.info("Split %s into %s chunks", filename, len(chunks))
 
         if not chunks:
             raise HTTPException(
@@ -511,13 +573,13 @@ async def upload_pdf(file: UploadFile = File(...)):
             original_content = chunk.page_content
             chunk.page_content = normalize_text(original_content) or original_content
             chunk.metadata["original_content"] = original_content
-            chunk.metadata["source"] = file.filename
+            chunk.metadata["source"] = filename
 
-        logger.info("Building FAISS index for %s", file.filename)
+        logger.info("Building FAISS index for %s", filename)
         vector_store = FAISS.from_documents(chunks, get_embeddings())
         logger.info(
             "Finished indexing %s in %.2fs",
-            file.filename,
+            filename,
             time.perf_counter() - started_at,
         )
     finally:
@@ -525,7 +587,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     return UploadResponse(
         message="PDF uploaded and indexed successfully.",
-        filename=file.filename,
+        filename=filename,
         chunks=len(chunks),
     )
 
@@ -587,4 +649,4 @@ async def chat_stream(request: ChatRequest):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", "8000")))

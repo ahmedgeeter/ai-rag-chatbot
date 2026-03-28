@@ -75,7 +75,7 @@ export default function Sidebar({ onIndexed, onReset }: Props) {
       } catch (e) {
         const message =
           e instanceof TypeError
-            ? `Cannot reach backend at ${API}. Start the FastAPI server and try again.`
+            ? `Cannot reach backend at ${API}. Check the backend deployment and NEXT_PUBLIC_API_URL configuration.`
             : e instanceof Error
               ? e.message
               : "Upload failed";
@@ -124,7 +124,7 @@ export default function Sidebar({ onIndexed, onReset }: Props) {
               RAG Chat
             </p>
             <p className="text-[10px] text-slate-500 leading-tight">
-              llama3-70b · Groq
+              multilingual RAG · Groq
             </p>
           </div>
         </div>
