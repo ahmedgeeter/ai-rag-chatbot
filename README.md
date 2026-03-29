@@ -1,13 +1,10 @@
----
-title: Explainable Multilingual RAG Workspace
-emoji: 🤖
-colorFrom: indigo
-colorTo: purple
-sdk: docker
-app_port: 7860
-pinned: false
-license: mit
----
+<img width="1465" height="850" alt="image" src="https://github.com/user-attachments/assets/6d71a412-1861-4706-a1fc-17ad0edef2c0" />
+
+<img width="1918" height="865" alt="Screenshot 2026-03-29 190040" src="https://github.com/user-attachments/assets/217d613c-0e81-4385-9fff-0433c80f818d" />
+
+<img width="1919" height="868" alt="Screenshot 2026-03-29 185616" src="https://github.com/user-attachments/assets/c4bfc314-03c0-40e7-88dc-2eba4ab05234" />
+
+
 
 # Explainable Multilingual RAG Workspace
 
