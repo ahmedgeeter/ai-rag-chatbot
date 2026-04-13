@@ -6,7 +6,7 @@
 <img width="486" height="755" alt="Screenshot 2026-04-13 171408" src="https://github.com/user-attachments/assets/105d560f-3abd-46b3-9af4-51ad75865bbf" />
 
 
-                     [![Live Demo](https://img.shields.io/badge/Live_Demo-00C853?style=for-the-badge)](https://ai-helpdesk-rag.vercel.app/)
+          [![Live Demo](https://img.shields.io/badge/Live_Demo-00C853?style=for-the-badge)](https://ai-helpdesk-rag.vercel.app/)
 
 
 # Explainable Multilingual RAG Workspace
