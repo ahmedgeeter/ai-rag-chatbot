@@ -7,7 +7,7 @@
 
 
 
-
+[![Live Demo](https://img.shields.io/badge/Live_Demo-00C853?style=for-the-badge)](https://ai-helpdesk-rag.vercel.app/)
 
 
 # Explainable Multilingual RAG Workspace
